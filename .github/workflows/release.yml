@@ -1,0 +1,116 @@
+name: Release 1.12.2
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing version tag, e.g. v2.7.3-backport.1'
+        required: true
+        type: string
+      release_type:
+        description: 'Release channel (tag pushes use release)'
+        default: release
+        type: choice
+        options: [release, beta, alpha]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+      jar: ${{ steps.metadata.outputs.jar }}
+      sources: ${{ steps.metadata.outputs.sources }}
+      release_type: ${{ steps.metadata.outputs.release_type }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - name: Validate tag and version
+        id: metadata
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+          RELEASE_TYPE: ${{ inputs.release_type || 'release' }}
+        run: python3 tools/release_metadata.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew && ./gradlew clean build --no-daemon
+      - run: python3 tools/verify_artifact.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.metadata.outputs.tag }}
+          path: |
+            build/libs/${{ steps.metadata.outputs.jar }}
+            build/libs/${{ steps.metadata.outputs.sources }}
+            CHANGELOG.md
+          if-no-files-found: error
+
+  github:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.build.outputs.tag }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.tag }}
+          name: First-person Model 1.12.2 — ${{ needs.build.outputs.version }}
+          body_path: CHANGELOG.md
+          generate_release_notes: true
+          prerelease: ${{ needs.build.outputs.release_type != 'release' }}
+          fail_on_unmatched_files: true
+          files: |
+            build/libs/${{ needs.build.outputs.jar }}
+            build/libs/${{ needs.build.outputs.sources }}
+
+  curseforge:
+    name: Publish CurseForge (opt-in)
+    needs: [build, github]
+    if: ${{ vars.ENABLE_CURSEFORGE == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check CurseForge configuration
+        env:
+          CF_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          CF_API_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        shell: bash
+        run: |
+          if [[ ! "$CF_PROJECT_ID" =~ ^[0-9]+$ ]] || [[ -z "$CF_API_TOKEN" ]]; then
+            echo 'Set CURSEFORGE_PROJECT_ID and secret CURSEFORGE_TOKEN before enabling CurseForge.' >&2
+            exit 1
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.build.outputs.tag }}
+      - uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: build/libs/${{ needs.build.outputs.jar }}
+          name: First-person Model 1.12.2 — ${{ needs.build.outputs.version }}
+          version: ${{ needs.build.outputs.version }}
+          version-type: ${{ needs.build.outputs.release_type }}
+          changelog-file: CHANGELOG.md
+          loaders: forge
+          game-versions: '1.12.2'
+          java: '25'

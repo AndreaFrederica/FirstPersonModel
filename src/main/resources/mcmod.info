@@ -1,0 +1,13 @@
+[
+  {
+    "modid": "firstperson",
+    "name": "First-person Model",
+    "description": "Render your third-person body in first person. Minecraft 1.12.2 Cleanroom backport.",
+    "version": "${version}",
+    "mcversion": "1.12.2",
+    "url": "https://github.com/tr7zw/FirstPersonModel",
+    "authorList": ["tr7zw"],
+    "credits": "Original FirstPersonModel by tr7zw; 1.12.2 backport.",
+    "logoFile": "icon.png"
+  }
+]

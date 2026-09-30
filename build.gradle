@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'xyz.wagyourtail.unimined' version '1.4.26-kappa'
+}
+
+group = 'dev.tr7zw.firstperson'
+version = mod_version
+base { archivesName = 'firstperson-1.12.2' }
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(25) }
+    withSourcesJar()
+}
+
+unimined.minecraft {
+    version '1.12.2'
+    mappings { mcp('stable', '39-1.12') }
+    cleanroom {
+        loader cleanroom_version
+        runs.all {
+            systemProperty('mixin.env.disableRefMap', 'true')
+            systemProperty('fml.noSplash', 'true')
+            systemProperty('fml.coreMods.load', 'dev.tr7zw.firstperson.mixin.FirstPersonMixinLoader')
+        }
+    }
+    defaultRemapJar = false
+    remap(tasks.named('jar').get())
+}
+
+repositories { mavenCentral() }
+dependencies {
+    compileOnly 'com.cleanroommc:sponge-mixin:0.20.13+mixin.0.8.7'
+    compileOnly 'com.cleanroommc:lwjglx:1.0.0'
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+processResources {
+    inputs.property('version', project.version)
+    filesMatching('mcmod.info') { expand(version: project.version) }
+}
+jar {
+    archiveClassifier = 'dev'
+    manifest.attributes(
+        'ModType': 'CRL',
+        'FMLCorePlugin': 'dev.tr7zw.firstperson.mixin.FirstPersonMixinLoader',
+        'FMLCorePluginContainsFMLMod': 'true')
+    from('LICENSE')
+    finalizedBy 'remapJar'
+}
