@@ -10,7 +10,8 @@
     "LivingRendererMixin",
     "ArmorLayerMixin",
     "HeldItemLayerMixin",
-    "ItemRendererMixin"
+    "ItemRendererMixin",
+    "FishingRendererMixin"
   ],
   "injectors": { "defaultRequire": 1 }
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Add optional Aqua Acrobatics / Hydro Agility swimming and crawling pose integration,
+  animated swimming arms, camera clearance and configurable offsets.
+- Suppress the body while using configured spyglasses, including HGW defaults.
+- Respect UIE camera ownership (freecam/drone, free look, shoulder and render overrides)
+  and optionally UIE zoom.
+- Restore dynamic model-arm transitions and align fishing lines with the rendered body.
+- Add compatibility and hand-policy tests, and document the renamed `1.12.2` branch.
+
+Swimming was confirmed working by the user. Actual spyglass and UIE integration
+still require in-game verification; see VALIDATION.md for test coverage.
+
 ## 2.7.3-backport.1
 
 Requires Minecraft **1.12.2**, **Cleanroom 0.6.13-alpha** and **Java 25**.

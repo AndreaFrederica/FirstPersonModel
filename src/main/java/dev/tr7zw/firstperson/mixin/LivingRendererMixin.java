@@ -3,6 +3,8 @@ package dev.tr7zw.firstperson.mixin;
 import dev.tr7zw.firstperson.FirstPersonModelCore;
 import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.entity.layers.LayerArrow;
+import net.minecraft.client.renderer.entity.layers.LayerCape;
+import net.minecraft.client.renderer.entity.layers.LayerElytra;
 import net.minecraft.client.renderer.entity.layers.LayerCustomHead;
 import net.minecraft.client.renderer.entity.layers.LayerDeadmau5Head;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
@@ -21,6 +23,7 @@ public abstract class LivingRendererMixin {
         if (core.isRenderingPlayer()) {
             if (layer instanceof LayerCustomHead || layer instanceof LayerDeadmau5Head
                     || layer instanceof LayerArrow && !core.getConfig().renderStuckFeatures
+                    || core.hideSwimmingBody() && (layer instanceof LayerCape || layer instanceof LayerElytra)
                     || core.getConfig().hiddenLayers.contains(layer.getClass().getName())) return;
         }
         layer.doRenderLayer(entity, limbSwing, amount, delta, age, yaw, pitch, scale);

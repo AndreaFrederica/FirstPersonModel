@@ -23,6 +23,13 @@ with ZipFile(jars[0]) as jar:
         assert mappings.get(class_name), 'No production mappings: ' + class_name
     assert 'func_180446_a' in json.dumps(refmap), 'renderEntities is not remapped'
     assert 'func_187457_a' in json.dumps(refmap), 'first-person item renderer is not remapped'
+    # WrapMethod selectors need refmap entries even when the remapper does not
+    # recognize the MixinExtras annotation itself.
+    model = mappings['dev/tr7zw/firstperson/mixin/ModelRendererMixin']
+    assert 'func_78785_a' in model.get('render', ''), 'ModelRenderer.render is not remapped'
+    assert 'func_78791_b' in model.get('renderWithRotation', ''), 'ModelRenderer.renderWithRotation is not remapped'
+    fishing = mappings['dev/tr7zw/firstperson/mixin/FishingRendererMixin']
+    assert 'func_76986_a' in fishing.get('doRender(Lnet/minecraft/entity/projectile/EntityFishHook;DDDFF)V', ''), 'RenderFish.doRender is not remapped'
     for locale in ('en_us', 'zh_cn'):
         language = jar.read(f'assets/firstperson/lang/{locale}.lang').decode('utf-8')
         assert 'key.firstperson.toggle=' in language
